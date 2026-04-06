@@ -1,3 +1,7 @@
+ codex/create-multi-tenant-crm-and-student-portal-2gl9hw
+
+ codex/create-multi-tenant-crm-and-student-portal-eww8s8
+ main
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -166,3 +170,9 @@ export default function StudentsPage() {
     </AppShell>
   );
 }
+ codex/create-multi-tenant-crm-and-student-portal-2gl9hw
+
+
+export default function StudentsPage() { return <main className="p-8"><h1 className="text-2xl font-semibold">Students</h1></main>; }
+ main
+ main
