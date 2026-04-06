@@ -65,6 +65,7 @@ model Tenant {
   payments      Payment[]
   roles         Role[]
   requests      StudentRequest[]
+  studentScholarships StudentScholarship[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -99,6 +100,7 @@ model User {
   subAgentFor     Student[]      @relation("SubAgentStudents")
   tasksAssigned   Task[]         @relation("TaskAssignee")
   tasksCreated    Task[]         @relation("TaskCreator")
+  studentProfile  Student?       @relation("StudentAccount")
   notifications   Notification[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -121,7 +123,7 @@ model Student {
   englishLevel        String?
   stage               StudentStage        @default(LEAD)
   studentUserId       String?             @unique
-  studentUser         User?               @relation(fields: [studentUserId], references: [id])
+  studentUser         User?               @relation("StudentAccount", fields: [studentUserId], references: [id])
   agentId             String?
   agent               User?               @relation("AgentStudents", fields: [agentId], references: [id])
   subAgentId          String?
