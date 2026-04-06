@@ -14,8 +14,13 @@ export async function GET(req: NextRequest) {
 
   const universities = await prisma.university.findMany({ where: { tenantId: context.user.tenantId } });
   const recommendations = universities
+ codex/create-multi-tenant-crm-and-student-portal-eww8s8
+    .map((university) => ({ ...university, score: scoreUniversity(student, university) }))
+    .sort((first, second) => second.score - first.score)
+=======
     .map((u) => ({ ...u, score: scoreUniversity(student, u) }))
     .sort((a, b) => b.score - a.score)
+ main
     .slice(0, 5);
 
   return NextResponse.json(recommendations);
