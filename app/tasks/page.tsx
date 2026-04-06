@@ -1,3 +1,4 @@
+ codex/create-multi-tenant-crm-and-student-portal-eww8s8
 import AppShell from '@/components/app-shell';
 
 export default function TasksPage() {
@@ -9,3 +10,6 @@ export default function TasksPage() {
     </AppShell>
   );
 }
+=======
+export default function TasksPage() { return <main className="p-8"><h1 className="text-2xl font-semibold">Tasks</h1></main>; }
+ main

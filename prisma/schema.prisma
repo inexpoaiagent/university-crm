@@ -294,4 +294,8 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   @@index([tenantId, createdAt])
+ codex/create-multi-tenant-crm-and-student-portal-eww8s8
 }
+=======
+}
+ main
