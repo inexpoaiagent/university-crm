@@ -33,6 +33,7 @@ class StudentController extends Controller
         $students = Student::query()
             ->forTenant($user->tenant_id, $user->role_slug)
             ->whereNull('deleted_at')
+            ->with(['agent:id,name', 'subAgent:id,name'])
             ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
                 $sub->where('full_name', 'like', "%{$q}%")
                     ->orWhere('email', 'like', "%{$q}%")
@@ -47,7 +48,9 @@ class StudentController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('students.index', compact('students', 'q', 'stage', 'country', 'gpaMin', 'gpaMax'));
+        [$agents, $subAgents] = $this->agentOptions($user);
+
+        return view('students.index', compact('students', 'q', 'stage', 'country', 'gpaMin', 'gpaMax', 'agents', 'subAgents'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -67,7 +70,10 @@ class StudentController extends Controller
             'budget_usd' => 'nullable|numeric|min:0',
             'passport_number' => 'nullable|string|max:40',
             'is_active' => 'nullable|boolean',
+            'agent_id' => 'nullable|integer|exists:users,id',
+            'sub_agent_id' => 'nullable|integer|exists:users,id',
         ]);
+        $this->normalizeOwnerAssignment($user, $data);
         $existingPortalUser = User::query()->where('email', $data['email'])->whereNull('deleted_at')->first();
         if ($existingPortalUser) {
             return back()->withErrors(['email' => 'Email is already used by another account.'])->withInput();
@@ -103,7 +109,11 @@ class StudentController extends Controller
     public function show(Request $request, int $id): View
     {
         $user = $this->authUser($request);
-        $student = Student::query()->forTenant($user->tenant_id, $user->role_slug)->whereNull('deleted_at')->findOrFail($id);
+        $student = Student::query()
+            ->forTenant($user->tenant_id, $user->role_slug)
+            ->whereNull('deleted_at')
+            ->with(['agent:id,name,email', 'subAgent:id,name,email'])
+            ->findOrFail($id);
 
         $apps = Application::query()->forTenant($user->tenant_id, $user->role_slug)->where('student_id', $student->id)->get();
         $docs = Document::query()->forTenant($user->tenant_id, $user->role_slug)->where('student_id', $student->id)->get();
@@ -131,7 +141,10 @@ class StudentController extends Controller
             'budget_usd' => 'nullable|numeric|min:0',
             'passport_number' => 'nullable|string|max:40',
             'is_active' => 'nullable|boolean',
+            'agent_id' => 'nullable|integer|exists:users,id',
+            'sub_agent_id' => 'nullable|integer|exists:users,id',
         ]);
+        $this->normalizeOwnerAssignment($user, $data);
         $conflict = User::query()
             ->where('email', $data['email'])
             ->whereNull('deleted_at')
@@ -287,5 +300,86 @@ class StudentController extends Controller
         $this->audit($request, 'document.delete', 'document', $documentId);
 
         return back()->with('success', 'Document deleted.');
+    }
+
+    private function agentOptions(User $user): array
+    {
+        $hasParentUser = Schema::hasColumn('users', 'parent_user_id');
+        if ($user->role_slug === 'agent') {
+            $agents = User::query()
+                ->forTenant($user->tenant_id, $user->role_slug)
+                ->where('id', $user->id)
+                ->get(['id', 'name']);
+
+            $subAgents = collect();
+            if ($hasParentUser) {
+                $subAgents = User::query()
+                    ->forTenant($user->tenant_id, $user->role_slug)
+                    ->where('role_slug', 'sub_agent')
+                    ->where('parent_user_id', $user->id)
+                    ->whereNull('deleted_at')
+                    ->orderBy('name')
+                    ->get(['id', 'name']);
+            }
+
+            return [$agents, $subAgents];
+        }
+
+        $agents = User::query()
+            ->forTenant($user->tenant_id, $user->role_slug)
+            ->where('role_slug', 'agent')
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $subAgents = User::query()
+            ->forTenant($user->tenant_id, $user->role_slug)
+            ->where('role_slug', 'sub_agent')
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->get($hasParentUser ? ['id', 'name', 'parent_user_id'] : ['id', 'name']);
+
+        return [$agents, $subAgents];
+    }
+
+    private function normalizeOwnerAssignment(User $authUser, array &$data): void
+    {
+        if ($authUser->role_slug === 'agent') {
+            $data['agent_id'] = $authUser->id;
+        }
+
+        if (!empty($data['sub_agent_id'])) {
+            $subAgent = User::query()
+                ->forTenant($authUser->tenant_id, $authUser->role_slug)
+                ->where('id', (int) $data['sub_agent_id'])
+                ->where('role_slug', 'sub_agent')
+                ->whereNull('deleted_at')
+                ->first();
+            if (!$subAgent) {
+                abort(422, 'Invalid sub-agent selected.');
+            }
+
+            if ($authUser->role_slug === 'agent' && (int) ($subAgent->parent_user_id ?? 0) !== (int) $authUser->id) {
+                abort(422, 'Selected sub-agent is not assigned to this agent.');
+            }
+
+            if (empty($data['agent_id']) && !empty($subAgent->parent_user_id)) {
+                $data['agent_id'] = (int) $subAgent->parent_user_id;
+            }
+        }
+
+        if (!empty($data['agent_id'])) {
+            $agent = User::query()
+                ->forTenant($authUser->tenant_id, $authUser->role_slug)
+                ->where('id', (int) $data['agent_id'])
+                ->where('role_slug', 'agent')
+                ->whereNull('deleted_at')
+                ->first();
+            if (!$agent) {
+                abort(422, 'Invalid agent selected.');
+            }
+        } else {
+            $data['agent_id'] = null;
+        }
     }
 }

@@ -22,7 +22,7 @@
     <table class="table-compact">
         <thead>
         <tr>
-            <th>Student</th><th>Nationality</th><th>GPA</th><th>Field</th><th>Stage</th><th>Actions</th>
+            <th>Student</th><th>Nationality</th><th>GPA</th><th>Field</th><th>Agent</th><th>Sub-Agent</th><th>Stage</th><th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -32,6 +32,8 @@
                 <td>{{ $student->nationality ?: '-' }}</td>
                 <td>{{ $student->gpa ?: '-' }}</td>
                 <td>{{ $student->field_of_study ?: '-' }}</td>
+                <td>{{ $student->agent?->name ?: '-' }}</td>
+                <td>{{ $student->subAgent?->name ?: '-' }}</td>
                 <td><span class="badge {{ $student->stage }}">{{ ucfirst($student->stage) }}</span></td>
                 <td style="display:flex;gap:6px;">
                     <a class="tab" href="/students/{{ $student->id }}">View</a>
@@ -71,6 +73,18 @@
             <input name="target_country" value="{{ $student->target_country }}">
             <input name="budget_usd" value="{{ $student->budget_usd }}">
             <input name="passport_number" value="{{ $student->passport_number }}">
+            <select name="agent_id">
+                <option value="">Select Agent</option>
+                @foreach($agents as $agent)
+                    <option value="{{ $agent->id }}" {{ (string) ($student->agent_id ?? '') === (string) $agent->id ? 'selected' : '' }}>{{ $agent->name }}</option>
+                @endforeach
+            </select>
+            <select name="sub_agent_id">
+                <option value="">Select Sub-Agent</option>
+                @foreach($subAgents as $sub)
+                    <option value="{{ $sub->id }}" {{ (string) ($student->sub_agent_id ?? '') === (string) $sub->id ? 'selected' : '' }}>{{ $sub->name }}</option>
+                @endforeach
+            </select>
             <select name="is_active">
                 <option value="1" {{ (int) $student->is_active === 1 ? 'selected' : '' }}>Active</option>
                 <option value="0" {{ (int) $student->is_active === 0 ? 'selected' : '' }}>Inactive</option>
@@ -107,6 +121,18 @@
             <input name="target_country" placeholder="Target country">
             <input name="budget_usd" placeholder="Budget USD">
             <input name="passport_number" placeholder="Passport #">
+            <select name="agent_id">
+                <option value="">Select Agent</option>
+                @foreach($agents as $agent)
+                    <option value="{{ $agent->id }}">{{ $agent->name }}</option>
+                @endforeach
+            </select>
+            <select name="sub_agent_id">
+                <option value="">Select Sub-Agent</option>
+                @foreach($subAgents as $sub)
+                    <option value="{{ $sub->id }}">{{ $sub->name }}</option>
+                @endforeach
+            </select>
             <select name="is_active"><option value="1">Active login</option><option value="0">Inactive login</option></select>
         </div>
         <div style="margin-top:10px;display:flex;gap:8px;">

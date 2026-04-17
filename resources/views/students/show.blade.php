@@ -27,6 +27,8 @@
             <p><strong>Target Country:</strong> {{ $student->target_country ?: '-' }}</p>
             <p><strong>Budget (USD):</strong> {{ $student->budget_usd ?: '-' }}</p>
             <p><strong>Passport #:</strong> {{ $student->passport_number ?: '-' }}</p>
+            <p><strong>Source Agent:</strong> {{ $student->agent?->name ?: '-' }}</p>
+            <p><strong>Source Sub-Agent:</strong> {{ $student->subAgent?->name ?: '-' }}</p>
         </div>
         <div class="card">
             <h3>Case Health</h3>

@@ -21,22 +21,64 @@
             ->get();
         $headerUnread = $headerNotifications->whereNull('read_at')->count();
     }
+    $can = function (string $permission) use ($authUser): bool {
+        if (!$authUser) {
+            return false;
+        }
+        if ($authUser->role_slug === 'super_admin') {
+            return true;
+        }
+        return $authUser->hasPermission($permission);
+    };
 @endphp
 <div class="layout">
     <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
     <aside class="sidebar">
         <h1>Vertue CRM</h1>
         <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}" href="/dashboard">Dashboard</a>
-        <a class="nav-link {{ request()->is('students*') ? 'active' : '' }}" href="/students">Students</a>
-        <a class="nav-link {{ request()->is('applications*') ? 'active' : '' }}" href="/applications">Applications</a>
-        <a class="nav-link {{ request()->is('pipeline*') ? 'active' : '' }}" href="/pipeline">Pipeline Board</a>
-        <a class="nav-link {{ request()->is('tasks*') ? 'active' : '' }}" href="/tasks">Tasks</a>
-        <a class="nav-link {{ request()->is('messages*') ? 'active' : '' }}" href="/messages">Messages</a>
-        <a class="nav-link {{ request()->is('scholarships*') ? 'active' : '' }}" href="/scholarships">Scholarships</a>
-        <a class="nav-link {{ request()->is('universities*') ? 'active' : '' }}" href="/universities">Universities</a>
-        <a class="nav-link {{ request()->is('finance*') ? 'active' : '' }}" href="/finance">Finance</a>
-        <a class="nav-link {{ request()->is('student-requests*') ? 'active' : '' }}" href="/student-requests">Student Requests</a>
-        <a class="nav-link {{ request()->is('agents*') ? 'active' : '' }}" href="/agents">Agents & Roles</a>
+        @if($can('students.view'))
+            <a class="nav-link {{ request()->is('students*') ? 'active' : '' }}" href="/students">Students</a>
+        @endif
+        @if($can('applications.view'))
+            <a class="nav-link {{ request()->is('applications*') ? 'active' : '' }}" href="/applications">Applications</a>
+        @endif
+        @if($can('students.view'))
+            <a class="nav-link {{ request()->is('pipeline*') ? 'active' : '' }}" href="/pipeline">Pipeline Board</a>
+        @endif
+        @if($can('tasks.view') || $can('students.view'))
+            <a class="nav-link {{ request()->is('tasks*') ? 'active' : '' }}" href="/tasks">Tasks</a>
+        @endif
+        @if($can('messages.view') || $can('students.view'))
+            <a class="nav-link {{ request()->is('messages*') ? 'active' : '' }}" href="/messages">Messages</a>
+        @endif
+        @if($can('universities.view'))
+            <a class="nav-link {{ request()->is('scholarships*') ? 'active' : '' }}" href="/scholarships">Scholarships</a>
+            <a class="nav-link {{ request()->is('universities*') ? 'active' : '' }}" href="/universities">Universities</a>
+        @endif
+        @if($can('finance.view'))
+            <a class="nav-link {{ request()->is('finance*') ? 'active' : '' }}" href="/finance">Finance</a>
+        @endif
+        @if($can('student_requests.view'))
+            <a class="nav-link {{ request()->is('student-requests*') ? 'active' : '' }}" href="/student-requests">Student Requests</a>
+        @endif
+        @if($can('users.view'))
+            <a class="nav-link {{ request()->is('agents*') ? 'active' : '' }}" href="/agents">Agents & Roles</a>
+            <a class="nav-link {{ request()->is('agents/performance*') ? 'active' : '' }}" href="/agents/performance">Agent Performance</a>
+        @endif
+        @if($can('students.view'))
+            <a class="nav-link {{ request()->is('reports/advanced*') ? 'active' : '' }}" href="/reports/advanced">Advanced Reports</a>
+        @endif
+        @if($can('users.view'))
+            <a class="nav-link {{ request()->is('audit-logs*') ? 'active' : '' }}" href="/audit-logs">Audit Logs</a>
+        @endif
+        @if($can('settings.update'))
+            <a class="nav-link {{ request()->is('templates*') ? 'active' : '' }}" href="/templates">Templates</a>
+            <a class="nav-link {{ request()->is('automation-rules*') ? 'active' : '' }}" href="/automation-rules">Automation Rules</a>
+            <a class="nav-link {{ request()->is('api-tokens*') ? 'active' : '' }}" href="/api-tokens">API Tokens</a>
+        @endif
+        @if($can('settings.view'))
+            <a class="nav-link {{ request()->is('health*') ? 'active' : '' }}" href="/health">Health Checks</a>
+        @endif
         <a class="nav-link {{ request()->is('settings*') ? 'active' : '' }}" href="/settings">Settings</a>
         <form method="POST" action="/logout" style="margin-top:16px;">
             @csrf

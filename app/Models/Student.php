@@ -37,6 +37,16 @@ class Student extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function agent(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'agent_id');
+    }
+
+    public function subAgent(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sub_agent_id');
+    }
+
     public function applications(): HasMany
     {
         return $this->hasMany(Application::class);

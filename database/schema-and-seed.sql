@@ -313,16 +313,23 @@ INSERT INTO permissions (id, `key`, name, group_key) VALUES
 (17, 'student_requests.view', 'View Student Requests', 'student_requests'),
 (18, 'student_requests.approve', 'Approve Student Requests', 'student_requests'),
 (19, 'student_requests.reject', 'Reject Student Requests', 'student_requests'),
-(20, 'finance.view', 'View Finance', 'finance');
+(20, 'finance.view', 'View Finance', 'finance'),
+(21, 'finance.update', 'Manage Finance', 'finance'),
+(22, 'tasks.view', 'View Tasks', 'tasks'),
+(23, 'tasks.create', 'Create Tasks', 'tasks'),
+(24, 'tasks.update', 'Update Tasks', 'tasks'),
+(25, 'tasks.delete', 'Delete Tasks', 'tasks'),
+(26, 'messages.view', 'View Messages', 'messages'),
+(27, 'messages.create', 'Create Messages', 'messages');
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 2, id FROM permissions;
 INSERT INTO role_permissions (role_id, permission_id)
-SELECT 3, id FROM permissions WHERE `key` IN ('students.view','students.create','students.update','applications.view','applications.create','applications.update','universities.view','student_requests.view');
+SELECT 3, id FROM permissions WHERE `key` IN ('students.view','students.create','students.update','applications.view','applications.create','applications.update','universities.view','student_requests.view','tasks.view','tasks.create','tasks.update','messages.view','messages.create');
 INSERT INTO role_permissions (role_id, permission_id)
-SELECT 4, id FROM permissions WHERE `key` IN ('students.view','applications.view','student_requests.view');
+SELECT 4, id FROM permissions WHERE `key` IN ('students.view','applications.view','student_requests.view','tasks.view','messages.view');
 INSERT INTO role_permissions (role_id, permission_id)
-SELECT 5, id FROM permissions WHERE `key` IN ('applications.view','universities.view');
+SELECT 5, id FROM permissions WHERE `key` IN ('applications.view','universities.view','messages.view');
 
 INSERT INTO users (id, tenant_id, name, email, password, role_slug, language, font_scale, currency_preference, is_active) VALUES
 (1, 1, 'Main Super Admin', 'admincrm@vertue.com', '$2b$10$UmYGdRGaushC6fPVyl5xBe9RuwMmcCGWUCGJ2VbY4VcaXrYORA/DO', 'super_admin', 'en', 'sm', 'USD', 1);

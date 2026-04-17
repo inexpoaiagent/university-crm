@@ -41,6 +41,7 @@
         <p><a href="/applications">Applications Desk</a></p>
         <p><a href="/finance">Finance</a></p>
         <p><a href="/scholarships">Scholarships</a></p>
+        <p><a href="/agents/performance">Agent Performance</a></p>
     </div>
 </div>
 
