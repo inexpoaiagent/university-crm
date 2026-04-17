@@ -1,16 +1,14 @@
 import Link from 'next/link';
- codex/create-multi-tenant-crm-and-student-portal-2gl9hw
+import { MobileAppShell } from '@/components/mobile-app-shell';
+import { MobileDashboard } from '@/components/mobile-dashboard';
 
- codex/create-multi-tenant-crm-and-student-portal-eww8s8
- main
-import AppShell from '@/components/app-shell';
-
+/*
 const cards = [
   { label: 'Total Students', value: '—', href: '/students' },
   { label: 'Applications', value: '—', href: '/applications' },
   { label: 'Pending Documents', value: '—', href: '/documents' },
   { label: 'Universities', value: '—', href: '/universities' }
- codex/create-multi-tenant-crm-and-student-portal-2gl9hw
+// removed conflict artifact
 
 
 
@@ -19,16 +17,14 @@ const modules = [
   { name: 'Applications', href: '/applications' },
   { name: 'Universities', href: '/universities' },
   { name: 'Tasks', href: '/tasks' }
- main
- main
 ];
 
 export default function DashboardPage() {
   return (
- codex/create-multi-tenant-crm-and-student-portal-2gl9hw
+// removed conflict artifact
 
- codex/create-multi-tenant-crm-and-student-portal-eww8s8
- main
+// removed conflict artifact
+
     <AppShell title="Dashboard">
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
@@ -40,7 +36,7 @@ export default function DashboardPage() {
         ))}
       </section>
     </AppShell>
- codex/create-multi-tenant-crm-and-student-portal-2gl9hw
+// removed conflict artifact
 
 
     <main className="p-8 space-y-6">
@@ -54,7 +50,22 @@ export default function DashboardPage() {
         ))}
       </section>
     </main>
- main
- main
+
+  );
+}
+*/
+
+export default function DashboardPage() {
+  return (
+    <MobileAppShell title="Home">
+      <MobileDashboard />
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+        <p className="text-xs uppercase tracking-wide text-slate-500">Quick Actions</p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Link href="/universities" className="rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-medium text-white">Apply Now</Link>
+          <Link href="/documents" className="rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-medium text-slate-700">Upload Docs</Link>
+        </div>
+      </div>
+    </MobileAppShell>
   );
 }

@@ -1,4 +1,18 @@
+<<<<<<< HEAD
 node_modules
 .next
 .env
 prisma/migrations
+=======
+/vendor
+/node_modules
+/.env
+/storage/*.key
+/storage/logs/*.log
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+!/storage/framework/cache/.gitignore
+!/storage/framework/sessions/.gitignore
+!/storage/framework/views/.gitignore
+>>>>>>> 6f791bc (initial project setup)
