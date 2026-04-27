@@ -8,6 +8,8 @@ use App\Http\Middleware\AuthenticateStudent;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureTenantIsolation;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Routing\Middleware\ValidateSignature;
 
 class Kernel extends HttpKernel
 {
@@ -34,6 +36,8 @@ class Kernel extends HttpKernel
     ];
 
     protected $routeMiddleware = [
+        'throttle' => ThrottleRequests::class,
+        'signed' => ValidateSignature::class,
         'auth.jwt' => AuthenticateJwt::class,
         'auth.crm' => AuthenticateCrm::class,
         'auth.student' => AuthenticateStudent::class,

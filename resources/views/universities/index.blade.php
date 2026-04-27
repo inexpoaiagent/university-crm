@@ -4,7 +4,7 @@
 <div class="card">
     <div class="toolbar">
         <form method="GET" action="/universities" style="display:flex;gap:8px;">
-            <input id="global-search" name="q" value="{{ $q }}" placeholder="Search by university/country">
+            <input id="global-search" name="q" value="{{ $q }}" placeholder="Search by university/country/city/type">
             <button type="submit">Search</button>
         </form>
         <button onclick="document.getElementById('addUniversity').showModal()">+ Add University</button>
@@ -13,7 +13,7 @@
         @foreach($universities as $u)
             <div class="card">
                 <h3 style="margin:0 0 6px;font-size:14px;color:var(--text)">{{ $u->name }}</h3>
-                <div class="footer-note">{{ $u->country }} • {{ $u->currency }}</div>
+                <div class="footer-note">{{ $u->country }} / {{ $u->city ?: '-' }} - {{ ucfirst($u->institution_type ?: 'university') }} - {{ $u->currency }}</div>
                 <p>{{ $u->tuition_range }}</p>
                 <p class="footer-note">{{ \Illuminate\Support\Str::limit($u->description, 150) }}</p>
                 <p class="footer-note">Applications: {{ $applicationCounts[$u->id] ?? 0 }}</p>
@@ -35,6 +35,11 @@
         <div class="grid-4">
             <input name="name" placeholder="University name" required>
             <input name="country" placeholder="Country" required>
+            <input name="city" placeholder="City">
+            <select name="institution_type" required>
+                <option value="university">University</option>
+                <option value="school">School</option>
+            </select>
             <input name="website" placeholder="Website">
             <select name="currency"><option>USD</option><option>EUR</option><option>TRY</option></select>
             <input name="tuition_range" placeholder="Tuition range">
@@ -60,6 +65,11 @@
         <div class="grid-4">
             <input name="name" value="{{ $u->name }}" required>
             <input name="country" value="{{ $u->country }}" required>
+            <input name="city" value="{{ $u->city }}">
+            <select name="institution_type" required>
+                <option value="university" {{ ($u->institution_type ?? 'university') === 'university' ? 'selected' : '' }}>University</option>
+                <option value="school" {{ ($u->institution_type ?? '') === 'school' ? 'selected' : '' }}>School</option>
+            </select>
             <input name="website" value="{{ $u->website }}">
             <select name="currency"><option value="USD" {{ $u->currency === 'USD' ? 'selected' : '' }}>USD</option><option value="EUR" {{ $u->currency === 'EUR' ? 'selected' : '' }}>EUR</option><option value="TRY" {{ $u->currency === 'TRY' ? 'selected' : '' }}>TRY</option></select>
             <input name="tuition_range" value="{{ $u->tuition_range }}">
@@ -78,3 +88,4 @@
 </dialog>
 @endforeach
 @endsection
+

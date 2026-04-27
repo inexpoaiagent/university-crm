@@ -80,6 +80,13 @@
                     <td>{{ $doc->uploaded_at ?: '-' }}</td>
                     <td>{{ $doc->expiry_date ?: '-' }}</td>
                     <td style="display:flex;gap:6px;">
+                        <form method="POST" action="/students/{{ $student->id }}/documents" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center;">
+                            @csrf
+                            <input type="hidden" name="type" value="{{ $doc->type }}">
+                            <input type="file" name="file" required style="max-width:190px;">
+                            <input type="date" name="expiry_date" style="max-width:150px;">
+                            <button type="submit" class="secondary">{{ $doc->is_missing ? 'Upload' : 'Replace' }}</button>
+                        </form>
                         @if(!$doc->is_missing && $doc->status !== 'verified')
                             <form method="POST" action="/students/{{ $student->id }}/documents/{{ $doc->id }}/verify">
                                 @csrf

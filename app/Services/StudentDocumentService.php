@@ -13,6 +13,8 @@ class StudentDocumentService
         'transcript' => 'Transcript',
         'english_certificate' => 'English Certificate',
         'photo' => 'Photo',
+        'other_documents' => 'Other Documents',
+        'payment_receipt' => 'Payment Receipt',
     ];
 
     public function requiredRows(int $tenantId, int $studentId): Collection
@@ -40,4 +42,3 @@ class StudentDocumentService
         })->values();
     }
 }
-

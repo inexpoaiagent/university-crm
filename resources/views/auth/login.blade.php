@@ -15,12 +15,13 @@
     @endif
     <form method="POST" action="/login">
         @csrf
-        <label>Email</label>
-        <input type="email" name="email" value="{{ old('email') }}" required style="width:100%;margin:6px 0 10px;">
+        <label>Email or Username</label>
+        <input type="text" name="login" value="{{ old('login', old('email')) }}" required style="width:100%;margin:6px 0 10px;">
         <label>Password</label>
         <input type="password" name="password" required style="width:100%;margin:6px 0 14px;">
         <button type="submit" style="width:100%;">Login</button>
     </form>
+    <a href="/portal/login" class="secondary" style="display:block;text-align:center;margin-top:10px;padding:10px 12px;border-radius:10px;text-decoration:none;">Student Portal</a>
 </div>
 </body>
 </html>

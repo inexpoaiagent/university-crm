@@ -14,6 +14,8 @@ class University extends Model
         'tenant_id',
         'name',
         'country',
+        'city',
+        'institution_type',
         'website',
         'currency',
         'tuition_range',

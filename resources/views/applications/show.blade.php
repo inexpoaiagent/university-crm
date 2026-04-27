@@ -13,14 +13,40 @@
     <div class="two-col">
         <div class="card">
             <h3>Case Details</h3>
-            <p><strong>Student:</strong> {{ $student?->full_name ?: ('#'.$application->student_id) }}</p>
-            <p><strong>University:</strong> {{ $university?->name ?: ('#'.$application->university_id) }}</p>
-            <p><strong>Program:</strong> {{ $application->program }}</p>
-            <p><strong>Intake:</strong> {{ $application->intake }}</p>
-            <p><strong>Deadline:</strong> {{ $application->deadline ?: '-' }}</p>
-            <p><strong>Enroll probability:</strong> {{ $application->enroll_probability }}%</p>
-            <p><strong>Explainability:</strong> {{ $application->explainability ?: '-' }}</p>
-            <p><strong>Best next action:</strong> {{ $application->best_next_action ?: '-' }}</p>
+            <div class="app-case-table">
+                <div class="app-case-item">
+                    <div class="app-case-name">Student</div>
+                    <div class="app-case-data">{{ $student?->full_name ?: ('#'.$application->student_id) }}</div>
+                </div>
+                <div class="app-case-item">
+                    <div class="app-case-name">University</div>
+                    <div class="app-case-data">{{ $university?->name ?: ('#'.$application->university_id) }}</div>
+                </div>
+                <div class="app-case-item">
+                    <div class="app-case-name">Program</div>
+                    <div class="app-case-data">{{ $application->program }}</div>
+                </div>
+                <div class="app-case-item">
+                    <div class="app-case-name">Intake</div>
+                    <div class="app-case-data">{{ $application->intake }}</div>
+                </div>
+                <div class="app-case-item">
+                    <div class="app-case-name">Deadline</div>
+                    <div class="app-case-data">{{ $application->deadline ?: '-' }}</div>
+                </div>
+                <div class="app-case-item">
+                    <div class="app-case-name">Enroll Probability</div>
+                    <div class="app-case-data">{{ $application->enroll_probability }}%</div>
+                </div>
+                <div class="app-case-item">
+                    <div class="app-case-name">Explainability</div>
+                    <div class="app-case-data">{{ $application->explainability ?: '-' }}</div>
+                </div>
+                <div class="app-case-item">
+                    <div class="app-case-name">Best Next Action</div>
+                    <div class="app-case-data">{{ $application->best_next_action ?: '-' }}</div>
+                </div>
+            </div>
             <h3>Notes</h3>
             <pre style="white-space:pre-wrap;font-family:inherit;">{{ $application->notes ?: '-' }}</pre>
         </div>

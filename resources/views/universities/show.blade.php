@@ -3,7 +3,8 @@
 @section('content')
 <div class="card">
     <h2 style="margin-top:0;">{{ $university->name }}</h2>
-    <p><strong>Country:</strong> {{ $university->country }} | <strong>Currency:</strong> {{ $university->currency }} | <strong>Website:</strong> <a href="{{ $university->website }}" target="_blank">{{ $university->website }}</a></p>
+    <p><strong>Country:</strong> {{ $university->country }} | <strong>City:</strong> {{ $university->city ?: '-' }} | <strong>Type:</strong> {{ ucfirst($university->institution_type ?: 'university') }}</p>
+    <p><strong>Currency:</strong> {{ $university->currency }} | <strong>Website:</strong> <a href="{{ $university->website }}" target="_blank">{{ $university->website }}</a></p>
     <p><strong>Tuition:</strong> {{ $university->tuition_range }}</p>
     <p><strong>Languages:</strong> {{ $university->language }}</p>
     <p><strong>Deadline:</strong> {{ $university->deadline ?: '-' }}</p>

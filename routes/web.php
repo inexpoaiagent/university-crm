@@ -37,6 +37,7 @@ Route::middleware(['auth.crm', 'tenant'])->group(function (): void {
     Route::get('/students/{id}', [StudentController::class, 'show'])->middleware('permission:students.view');
     Route::put('/students/{id}', [StudentController::class, 'update'])->middleware('permission:students.update');
     Route::post('/students/{id}/reset-password', [StudentController::class, 'resetPassword'])->middleware('permission:students.update');
+    Route::post('/students/{id}/documents', [StudentController::class, 'uploadDocument'])->middleware('permission:students.update');
     Route::post('/students/{id}/documents/{documentId}/verify', [StudentController::class, 'verifyDocument'])->middleware('permission:students.update');
     Route::delete('/students/{id}/documents/{documentId}', [StudentController::class, 'deleteDocument'])->middleware('permission:students.update');
     Route::delete('/students/{id}', [StudentController::class, 'destroy'])->middleware('permission:students.delete');

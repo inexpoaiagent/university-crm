@@ -83,7 +83,7 @@ class PortalController extends Controller
             }, fn ($query) => $query->where('email', $user->email))
             ->firstOrFail();
         $data = $request->validate([
-            'type' => 'required|string|in:passport,diploma,transcript,english_certificate,photo',
+            'type' => 'required|string|in:passport,diploma,transcript,english_certificate,photo,other_documents,payment_receipt',
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 

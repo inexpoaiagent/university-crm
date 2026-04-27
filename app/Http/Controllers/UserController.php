@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -38,13 +39,20 @@ class UserController extends Controller
         $auth = $this->authUser($request);
         $data = $request->validate([
             'name' => 'required|string|max:120',
-            'email' => 'required|email|max:120|unique:users,email',
+            'email' => [
+                'required',
+                'email',
+                'max:120',
+                Rule::unique('users', 'email')->whereNull('deleted_at'),
+            ],
             'password' => 'required|string|min:8',
             'role_slug' => 'required|string|in:admin,agent,sub_agent,super_admin',
         ]);
         if ($auth->role_slug !== 'super_admin' && $data['role_slug'] === 'super_admin') {
             return back()->withErrors(['role_slug' => 'Only super admin can create super admin users.']);
         }
+        $data['name'] = trim((string) $data['name']);
+        $data['email'] = mb_strtolower(trim((string) $data['email']));
         $data['tenant_id'] = $auth->tenant_id;
         $data['language'] = 'en';
         $data['is_active'] = 1;
@@ -61,7 +69,12 @@ class UserController extends Controller
         $user = User::query()->forTenant($auth->tenant_id, $auth->role_slug)->whereNull('deleted_at')->findOrFail($id);
         $data = $request->validate([
             'name' => 'required|string|max:120',
-            'email' => 'required|email|max:120|unique:users,email,'.$user->id,
+            'email' => [
+                'required',
+                'email',
+                'max:120',
+                Rule::unique('users', 'email')->ignore($user->id)->whereNull('deleted_at'),
+            ],
             'role_slug' => 'required|string|in:admin,agent,sub_agent,super_admin',
             'is_active' => 'nullable|boolean',
             'password' => 'nullable|string|min:8',
@@ -69,6 +82,8 @@ class UserController extends Controller
         if ($auth->role_slug !== 'super_admin' && $data['role_slug'] === 'super_admin') {
             return back()->withErrors(['role_slug' => 'Only super admin can assign super admin role.']);
         }
+        $data['name'] = trim((string) $data['name']);
+        $data['email'] = mb_strtolower(trim((string) $data['email']));
         if (!empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         } else {

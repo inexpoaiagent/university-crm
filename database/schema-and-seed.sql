@@ -105,6 +105,8 @@ CREATE TABLE universities (
   tenant_id BIGINT UNSIGNED NOT NULL,
   name VARCHAR(190) NOT NULL,
   country VARCHAR(80) NOT NULL,
+  city VARCHAR(120) NULL,
+  institution_type VARCHAR(40) NOT NULL DEFAULT 'university',
   website VARCHAR(255) NULL,
   currency VARCHAR(8) NOT NULL DEFAULT 'USD',
   tuition_range VARCHAR(255) NULL,

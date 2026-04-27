@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="layout" style="grid-template-columns:240px 1fr;">
+<div class="layout portal-layout">
+    <div class="sidebar-backdrop" id="portalSidebarBackdrop" onclick="closePortalSidebar()"></div>
     <aside class="sidebar">
         <h1>Student Portal</h1>
         <a class="nav-link {{ request()->is('portal/dashboard') ? 'active' : '' }}" href="/portal/dashboard">Dashboard</a>
@@ -22,6 +23,10 @@
         </form>
     </aside>
     <main class="main">
+        <div class="portal-mobile-topbar">
+            <button type="button" class="mobile-menu-btn" onclick="togglePortalSidebar()">☰ Menu</button>
+            <strong>Student Portal</strong>
+        </div>
         <div class="topbar">
             <div style="display:flex;flex-direction:column;">
                 <strong>Student Workspace</strong>
@@ -38,5 +43,22 @@
         @yield('content')
     </main>
 </div>
+<script>
+    function togglePortalSidebar() {
+        const open = document.body.classList.toggle('sidebar-open');
+        const backdrop = document.getElementById('portalSidebarBackdrop');
+        if (backdrop) {
+            backdrop.classList.toggle('show', open);
+        }
+    }
+
+    function closePortalSidebar() {
+        document.body.classList.remove('sidebar-open');
+        const backdrop = document.getElementById('portalSidebarBackdrop');
+        if (backdrop) {
+            backdrop.classList.remove('show');
+        }
+    }
+</script>
 </body>
 </html>

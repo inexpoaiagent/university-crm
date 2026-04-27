@@ -23,6 +23,7 @@
     }
 @endphp
 <div class="layout">
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
     <aside class="sidebar">
         <h1>Vertue CRM</h1>
         <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}" href="/dashboard">Dashboard</a>
@@ -45,6 +46,7 @@
     <main class="main">
         <div class="topbar">
             <div style="display:flex;flex-direction:column;">
+                <button type="button" class="mobile-menu-btn" onclick="toggleSidebar()">☰ Menu</button>
                 <strong>{{ $title ?? 'CRM Workspace' }}</strong>
                 <span class="footer-note">Multi-tenant admissions CRM</span>
             </div>
@@ -66,7 +68,7 @@
             </div>
         </div>
 
-        <div id="notifPanel" class="notif-panel hidden">
+        <div id="notifPanel" class="notif-panel hidden" hidden>
             <div class="notif-panel-head">
                 <strong>Notifications</strong>
                 <a href="/notifications" class="tab">Open all</a>
@@ -123,6 +125,23 @@
         const panel = document.getElementById('notifPanel');
         if (panel) {
             panel.classList.toggle('hidden');
+            panel.hidden = panel.classList.contains('hidden');
+        }
+    }
+
+    function toggleSidebar() {
+        const open = document.body.classList.toggle('sidebar-open');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        if (backdrop) {
+            backdrop.classList.toggle('show', open);
+        }
+    }
+
+    function closeSidebar() {
+        document.body.classList.remove('sidebar-open');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        if (backdrop) {
+            backdrop.classList.remove('show');
         }
     }
 </script>

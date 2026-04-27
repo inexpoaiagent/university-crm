@@ -19,6 +19,8 @@ class UniversityController extends Controller
             ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
                 $sub->where('name', 'like', "%{$q}%")
                     ->orWhere('country', 'like', "%{$q}%")
+                    ->orWhere('city', 'like', "%{$q}%")
+                    ->orWhere('institution_type', 'like', "%{$q}%")
                     ->orWhere('programs_summary', 'like', "%{$q}%");
             }))
             ->latest('id')
@@ -39,6 +41,8 @@ class UniversityController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:160',
             'country' => 'required|string|max:80',
+            'city' => 'nullable|string|max:120',
+            'institution_type' => 'required|string|in:university,school',
             'website' => 'nullable|url|max:255',
             'currency' => 'required|string|max:8',
             'tuition_range' => 'nullable|string|max:255',
@@ -71,6 +75,8 @@ class UniversityController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:160',
             'country' => 'required|string|max:80',
+            'city' => 'nullable|string|max:120',
+            'institution_type' => 'required|string|in:university,school',
             'website' => 'nullable|url|max:255',
             'currency' => 'required|string|max:8',
             'tuition_range' => 'nullable|string|max:255',

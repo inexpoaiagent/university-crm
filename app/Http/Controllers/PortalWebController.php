@@ -12,6 +12,8 @@ use App\Models\University;
 use App\Models\User;
 use App\Services\StudentDocumentService;
 use App\Services\UniversityMatchingService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,16 +37,65 @@ class PortalWebController extends Controller
     public function login(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'email' => 'required|email',
+            'login' => 'nullable|string|max:190',
+            'email' => 'nullable|string|max:190',
             'password' => 'required|string',
         ]);
-        $user = User::query()
-            ->where('email', $data['email'])
-            ->where('role_slug', 'student')
-            ->whereNull('deleted_at')
-            ->first();
-        if (!$user || !$user->is_active || !Hash::check($data['password'], $user->password)) {
-            return back()->withErrors(['email' => 'Invalid credentials']);
+        $login = trim((string) ($data['login'] ?? $data['email'] ?? ''));
+        if ($login === '') {
+            return back()
+                ->withInput($request->except('password'))
+                ->withErrors(['login' => 'The login field is required.']);
+        }
+        try {
+            $normalizedLogin = mb_strtolower($login);
+            $user = User::query()
+                ->where(function ($q) use ($login, $normalizedLogin) {
+                    $q->whereRaw('LOWER(email) = ?', [$normalizedLogin])
+                        ->orWhere('name', $login);
+                })
+                ->where('role_slug', 'student')
+                ->whereNull('deleted_at')
+                ->first();
+        } catch (QueryException $e) {
+            report($e);
+            return back()
+                ->withInput($request->except('password'))
+                ->withErrors(['login' => 'Database connection failed. Please start MySQL and try again.']);
+        }
+
+        if (!$user) {
+            $studentExists = Student::query()
+                ->where(function ($q) use ($login) {
+                    $q->where('email', $login)->orWhere('full_name', $login);
+                })
+                ->exists();
+
+            if ($studentExists) {
+                return back()
+                    ->withInput($request->except('password'))
+                    ->withErrors(['login' => 'Portal account is not configured for this student. Please contact admin.']);
+            }
+        }
+
+        $passwordOk = $user ? Hash::check($data['password'], (string) $user->password) : false;
+        // Transitional support for legacy installs that stored plain-text passwords.
+        if (!$passwordOk && $user && hash_equals((string) $user->password, (string) $data['password'])) {
+            $user->password = Hash::make((string) $data['password']);
+            $user->save();
+            $passwordOk = true;
+        }
+
+        if ($user && !(bool) $user->is_active) {
+            return back()
+                ->withInput($request->except('password'))
+                ->withErrors(['login' => 'Your student account is inactive. Please contact admin.']);
+        }
+
+        if (!$user || !$passwordOk) {
+            return back()
+                ->withInput($request->except('password'))
+                ->withErrors(['login' => 'Invalid credentials']);
         }
         Auth::guard('crm')->logout();
         Auth::guard('student')->login($user, false);
@@ -74,19 +125,166 @@ class PortalWebController extends Controller
     {
         $user = $this->authUser($request);
         $student = $this->studentForUser($user);
+        $keywords = trim((string) $request->query('keywords', ''));
+        $countryUniversity = trim((string) $request->query('country_university', ''));
+        $cityUniversity = trim((string) $request->query('city_university', ''));
+        $universityType = trim((string) $request->query('university_type', ''));
+        $universityName = trim((string) $request->query('university_name', ''));
+        $degree = trim((string) $request->query('degree', ''));
+        $studyField = trim((string) $request->query('study_field', ''));
+        $hasCityColumn = Schema::hasColumn('universities', 'city');
+        $hasTypeColumn = Schema::hasColumn('universities', 'institution_type');
+        $hasProgramsTable = Schema::hasTable('university_programs');
+
+        $programUniversityIds = null;
+        if ($hasProgramsTable && ($degree !== '' || $studyField !== '')) {
+            $programUniversityIds = DB::table('university_programs')
+                ->where('tenant_id', $user->tenant_id)
+                ->when($degree !== '', fn ($query) => $query->where('degree_level', 'like', "%{$degree}%"))
+                ->when($studyField !== '', fn ($query) => $query->where('program_name', 'like', "%{$studyField}%"))
+                ->distinct()
+                ->pluck('university_id')
+                ->all();
+        }
+
         $universities = University::query()
             ->where('tenant_id', $user->tenant_id)
             ->where('is_active', 1)
+            ->when($keywords !== '', fn ($query) => $query->where(function ($sub) use ($keywords) {
+                $sub->where('name', 'like', "%{$keywords}%")
+                    ->orWhere('country', 'like', "%{$keywords}%")
+                    ->orWhere('language', 'like', "%{$keywords}%")
+                    ->orWhere('programs_summary', 'like', "%{$keywords}%")
+                    ->orWhere('description', 'like', "%{$keywords}%");
+            }))
+            ->when($countryUniversity !== '', fn ($query) => $query->where('country', $countryUniversity))
+            ->when($universityName !== '', fn ($query) => $query->where('name', 'like', "%{$universityName}%"))
+            ->when($cityUniversity !== '', function ($query) use ($cityUniversity, $hasCityColumn) {
+                if ($hasCityColumn) {
+                    $query->where('city', $cityUniversity);
+                    return;
+                }
+                $query->where(function ($sub) use ($cityUniversity) {
+                    $sub->where('name', 'like', "%{$cityUniversity}%")
+                        ->orWhere('description', 'like', "%{$cityUniversity}%")
+                        ->orWhere('programs_summary', 'like', "%{$cityUniversity}%");
+                });
+            })
+            ->when($universityType !== '', function ($query) use ($universityType, $hasTypeColumn) {
+                $needle = mb_strtolower($universityType);
+                if ($hasTypeColumn) {
+                    $query->whereRaw('LOWER(institution_type) = ?', [$needle]);
+                    return;
+                }
+                if ($needle === 'school') {
+                    $query->where(function ($sub) {
+                        $sub->whereRaw('LOWER(name) like ?', ['%school%'])
+                            ->orWhereRaw('LOWER(description) like ?', ['%school%']);
+                    });
+                    return;
+                }
+                $query->where(function ($sub) {
+                    $sub->whereRaw('LOWER(name) like ?', ['%university%'])
+                        ->orWhereRaw('LOWER(description) like ?', ['%university%']);
+                });
+            })
+            ->when(is_array($programUniversityIds) && !empty($programUniversityIds), fn ($query) => $query->whereIn('id', $programUniversityIds))
+            ->when(is_array($programUniversityIds) && empty($programUniversityIds) && ($degree !== '' || $studyField !== ''), fn ($query) => $query->whereRaw('1 = 0'))
             ->get();
         $universities = $this->matchingService->rankedForStudent($universities, [
-            'field' => $request->query('field', $student->field_of_study),
-            'country' => $request->query('country', $student->target_country),
+            'field' => $studyField !== '' ? $studyField : $request->query('field', $student->field_of_study),
+            'country' => $countryUniversity !== '' ? $countryUniversity : $request->query('country', $student->target_country),
             'budget' => $request->query('budget', $student->budget_usd ?? 0),
             'language' => $request->query('language', $student->english_level),
             'gpa' => $student->gpa,
         ]);
 
-        return view('portal.universities', compact('universities', 'student'));
+        $countryOptions = University::query()
+            ->where('tenant_id', $user->tenant_id)
+            ->where('is_active', 1)
+            ->whereNotNull('country')
+            ->where('country', '!=', '')
+            ->distinct()
+            ->orderBy('country')
+            ->pluck('country')
+            ->values()
+            ->all();
+
+        $citiesByCountry = [];
+        if ($hasCityColumn) {
+            $cityRows = University::query()
+                ->where('tenant_id', $user->tenant_id)
+                ->where('is_active', 1)
+                ->whereNotNull('country')
+                ->whereNotNull('city')
+                ->where('country', '!=', '')
+                ->where('city', '!=', '')
+                ->get(['country', 'city']);
+            foreach ($cityRows as $row) {
+                $citiesByCountry[$row->country] ??= [];
+                if (!in_array($row->city, $citiesByCountry[$row->country], true)) {
+                    $citiesByCountry[$row->country][] = $row->city;
+                }
+            }
+            foreach ($citiesByCountry as $countryKey => $cities) {
+                $citiesByCountry[$countryKey] = collect($cities)->unique()->sort()->values()->all();
+            }
+        }
+
+        $degreeOptions = [];
+        if ($hasProgramsTable) {
+            $degreeOptions = DB::table('university_programs')
+                ->where('tenant_id', $user->tenant_id)
+                ->whereNotNull('degree_level')
+                ->where('degree_level', '!=', '')
+                ->distinct()
+                ->orderBy('degree_level')
+                ->pluck('degree_level')
+                ->values()
+                ->all();
+        }
+        if (empty($degreeOptions)) {
+            $degreeOptions = ['Bachelor', 'Master', 'PhD', 'Diploma', 'Foundation'];
+        }
+
+        $studyFieldOptions = [];
+        if ($hasProgramsTable) {
+            $studyFieldOptions = DB::table('university_programs')
+                ->where('tenant_id', $user->tenant_id)
+                ->whereNotNull('program_name')
+                ->where('program_name', '!=', '')
+                ->distinct()
+                ->orderBy('program_name')
+                ->limit(120)
+                ->pluck('program_name')
+                ->map(function (string $name) {
+                    $pieces = preg_split('/[-,(|]/', $name);
+                    return trim($pieces[0] ?? $name);
+                })
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+        }
+        if (empty($studyFieldOptions)) {
+            $studyFieldOptions = ['Business', 'Computer Science', 'Engineering', 'Medicine', 'Law', 'Architecture'];
+        }
+
+        return view('portal.universities', compact(
+            'universities',
+            'student',
+            'keywords',
+            'countryUniversity',
+            'cityUniversity',
+            'universityType',
+            'universityName',
+            'degree',
+            'studyField',
+            'countryOptions',
+            'citiesByCountry',
+            'degreeOptions',
+            'studyFieldOptions'
+        ));
     }
 
     public function applications(Request $request): View
@@ -102,7 +300,7 @@ class PortalWebController extends Controller
         $user = $this->authUser($request);
         $student = $this->studentForUser($user);
         $documents = $this->documentService->requiredRows($user->tenant_id, $student->id);
-        return view('portal.documents', compact('documents'));
+        return view('portal.documents', compact('documents', 'student'));
     }
 
     public function uploadDocument(Request $request): RedirectResponse
@@ -110,7 +308,7 @@ class PortalWebController extends Controller
         $user = $this->authUser($request);
         $student = $this->studentForUser($user);
         $data = $request->validate([
-            'type' => 'required|string|in:passport,diploma,transcript,english_certificate,photo',
+            'type' => 'required|string|in:passport,diploma,transcript,english_certificate,photo,other_documents,payment_receipt',
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'expiry_date' => 'nullable|date',
         ]);

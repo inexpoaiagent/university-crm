@@ -221,6 +221,44 @@ class StudentController extends Controller
         return back()->with('success', 'Student password reset successfully.');
     }
 
+    public function uploadDocument(Request $request, int $id): RedirectResponse
+    {
+        $user = $this->authUser($request);
+        $student = Student::query()->forTenant($user->tenant_id, $user->role_slug)->whereNull('deleted_at')->findOrFail($id);
+        $data = $request->validate([
+            'type' => 'required|string|in:passport,diploma,transcript,english_certificate,photo,other_documents,payment_receipt',
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'expiry_date' => 'nullable|date',
+        ]);
+
+        $path = $request->file('file')->store('docs', 'public');
+        $existing = Document::query()
+            ->forTenant($user->tenant_id, $user->role_slug)
+            ->where('student_id', $student->id)
+            ->where('type', $data['type'])
+            ->latest('id')
+            ->first();
+
+        $payload = [
+            'tenant_id' => $user->tenant_id,
+            'student_id' => $student->id,
+            'type' => $data['type'],
+            'file_url' => '/storage/'.$path,
+            'file_name' => basename($path),
+            'status' => 'uploaded',
+            'expiry_date' => $data['expiry_date'] ?? null,
+        ];
+        if ($existing) {
+            $existing->update($payload);
+        } else {
+            Document::query()->create($payload);
+        }
+
+        $this->audit($request, 'document.upload', 'student', $student->id, ['type' => $data['type']]);
+
+        return back()->with('success', 'Document uploaded successfully.');
+    }
+
     public function verifyDocument(Request $request, int $id, int $documentId): RedirectResponse
     {
         $user = $this->authUser($request);
